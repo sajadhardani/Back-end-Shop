@@ -1,6 +1,6 @@
 const { default: mongoose } = require("mongoose");
 
-const userSchema = new mongoose.UserSchema({
+const banSchema = new mongoose.banSchema({
     phone:{
         type: String,
         required: true,
