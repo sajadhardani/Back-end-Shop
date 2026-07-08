@@ -91,9 +91,61 @@ exports.send = async (req, res, next) => {
   }
 };
 
-exports.verify = async(req,res,next) =>{
-    
-}
+exports.verify = async (req, res, next) => {
+  try {
+    const { phone, otp, isSeller } = req.body;
+
+    await OtpVerifyValidator.validate(req.body, { abortEarly: false });
+
+    const savedOtp = await redis.get(getOtpRedisPattern(phone));
+
+    if (!savedOtp) {
+      return errorResponse(res, 400, "Wrong or expired OTP");
+    }
+
+    const otpIsCorrect = await bcrypt.compare(otp, savedOtp);
+
+    if (!otpIsCorrect) {
+      return errorResponse(res, 400, "wrong or expired OTP");
+    }
+
+    const existingUser = await UserActivation.findOne({ phone });
+    if (existingUser) {
+      const token = jwt.sign(
+        { userId: existingUser._id },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "30d",
+        },
+      );
+
+      return successResponse(res, 200, { user: existingUser, token });
+    }
+
+    // if not new its register time  *Register
+    const isFirstUser = (await User.countDocuments()) === 0;
+
+    const user = await User.create({
+      phone,
+      username,
+      roles: isFirstUser ? ["ADMIN"] : isSeller ? ["USER", "SELLER"] : ["USER"],
+    });
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "30d",
+    });
+
+    return successResponse(
+      res,
+      201,
+      { message: "user registed successfullyy" },
+      token,
+      user,
+    );
+  } catch (err) {
+    next(err);
+  }
+};
 
 exports.getMe = async(req,res,next) =>{
     
