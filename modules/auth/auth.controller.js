@@ -56,6 +56,41 @@ const generateOtp = async (phone, length = 5, expiredTime = 1) => {
 };
 // finish helper function
 
+
+exports.send = async (req, res, next) => {
+  try {
+    const { phone } = req.body;
+
+    await sentOtpValidator.validate(req.body, { abortEarly: false });
+
+    const isBanned = await findOne({ phone });
+
+    if (isBanned) {
+      return errorResponse(res, 403, "this phone is banned");
+    }
+
+    //* Validation
+    await sentOtpValidator.validate(req.body, { abortEarly: false });
+
+    const { expired, remaining } = await getOtpDetail(phone);
+
+    if (!expired) {
+      return successResponse(res, 200, {
+        message: `otp already send, please try again after ${remainingTime}`,
+      });
+    }
+
+    const otp = generateOtp(phone);
+
+    await sendSms(phone, otp);
+    return successResponse(res, 200, { message: "otp sent successfully " });
+
+    await sendSms(phone, otp);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.verify = async(req,res,next) =>{
     
 }
