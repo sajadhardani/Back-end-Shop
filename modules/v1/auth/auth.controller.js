@@ -1,11 +1,11 @@
-const { errorResponse, successResponse } = require("../../helpers/responses");
-const { sendSms } = require("../../services/otp");
+const { errorResponse, successResponse } = require("../../../helpers/responses");
+const { sendSms } = require("../../../services/otp");
 const {
   sentOtpValidator,
   OtpVerifyValidator,
 } = require("../../validators/auth");
 const Ban = require("../Ban/ban-model");
-const redis = require("./../../redis");
+const redis = require("../../../redis");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
